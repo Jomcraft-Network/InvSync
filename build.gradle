@@ -1,0 +1,161 @@
+buildscript {
+    repositories {
+        maven { url = 'https://files.minecraftforge.net/maven' }
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+    }
+}
+
+plugins {
+    id 'com.matthewprenger.cursegradle' version '1.4.0'
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'eclipse'
+apply plugin: 'signing'
+
+version = "1.15.2-1.0.0"
+def fileVersion = "1.0.0"
+
+group= "net.jomcraft.invsync"
+
+archivesBaseName = "InvSync"
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+
+minecraft {
+    mappings channel: 'snapshot', version: '20200514-1.15.1'
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            property 'forge.logging.console.level', 'debug'
+
+            args '--mod', 'examplemod', '--all', '--output', file('src/generated/resources/')
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+processResources {
+    inputs.property "version", fileVersion
+
+    from(sourceSets.main.resources.srcDirs) {
+        include '**/*.toml'
+
+        expand 'version': fileVersion
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude '**/*.toml'
+    }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.15.2-31.2.19'
+
+  	compile 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
+  	compile 'net.jomcraft.jclib:JCLib-1.15.2:1.0.1'
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title": "InvSync",
+            "Specification-Vendor": "Jomcraft Network",
+            "Specification-Version": fileVersion,
+            "Implementation-Title": "InvSync",
+            "Implementation-Version": fileVersion,
+            "Implementation-Vendor" : "Jomcraft Network",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+        ])
+    }
+}
+
+task signJar {
+	if(project.hasProperty("signing.alias") && (project.property("signing.alias") != null && !project.property("signing.alias").equals(""))){
+
+    	doLast {
+        	configurations.archives.allArtifacts.files.each {
+           		if(it.name.endsWith(".jar")){
+            		ant.signjar(
+                		jar: it,
+						storetype:"jks",
+						alias: project.property("signing.alias"),
+                		storepass:project.property("signing.keyStorePassword"),
+                		keystore: project.property("signing.keystorePath"),
+                		keypass: project.property("signing.keyStorePassword"),
+                		preservelastmodified:"true"
+            		)
+            		signing.sign(it)
+					project.logger.lifecycle("JAR Signed: " + it.name)
+					}
+       		}
+    	}
+    
+    } else {
+    	doLast {
+    		project.logger.lifecycle("Signing skipped, not authorized")
+    	}
+    }
+}
+
+build.dependsOn signJar
+
+task sourcesJar(type: Jar) {
+	
+	from sourceSets.main.allSource
+	classifier = 'sources'
+}
+
+task deobfJar(type: Jar) {
+	
+	from sourceSets.main.output
+	classifier = 'deobf'
+}
+
+artifacts {
+    archives jar
+    archives sourcesJar
+	archives deobfJar
+}
+
+jar.finalizedBy('reobfJar') 
