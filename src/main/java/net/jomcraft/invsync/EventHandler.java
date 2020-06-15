@@ -20,10 +20,8 @@ public class EventHandler {
 
 	@SubscribeEvent
 	public void stopServer(FMLServerStoppedEvent event) {
-
 		MySQL.close();
 		SQLHandler.executor.shutdown();
-
 	}
 
 	@SubscribeEvent
@@ -33,24 +31,24 @@ public class EventHandler {
 		ArrayList<SQLItem> armorInventory = new ArrayList<SQLItem>();
 		ArrayList<SQLItem> offHandInventory = new ArrayList<SQLItem>();
 
-		PlayerEntity player = event.getPlayer();
-		PlayerInventory inv = player.inventory;
-		NonNullList<ItemStack> armor = inv.armorInventory;
-		NonNullList<ItemStack> offHand = inv.offHandInventory;
-		NonNullList<ItemStack> main = inv.mainInventory;
+		final PlayerEntity player = event.getPlayer();
+		final PlayerInventory inv = player.inventory;
+		final NonNullList<ItemStack> armor = inv.armorInventory;
+		final NonNullList<ItemStack> offHand = inv.offHandInventory;
+		final NonNullList<ItemStack> main = inv.mainInventory;
 
 		for (int slot = 0; slot < main.size(); slot++) {
 
-			ItemStack itemStack = main.get(slot);
+			final ItemStack itemStack = main.get(slot);
 
 			String tagString = "";
 
 			if (itemStack.hasTag())
 				tagString = itemStack.getTag().toString();
 
-			String registry = itemStack.getItem().getRegistryName().toString();
+			final String registry = itemStack.getItem().getRegistryName().toString();
 
-			int count = itemStack.getCount();
+			final int count = itemStack.getCount();
 
 			if (!registry.equals("minecraft:air"))
 				mainInventory.add(new SQLItem(slot, registry, count, tagString));
@@ -58,16 +56,16 @@ public class EventHandler {
 
 		for (int slot = 0; slot < armor.size(); slot++) {
 
-			ItemStack itemStack = armor.get(slot);
+			final ItemStack itemStack = armor.get(slot);
 
 			String tagString = "";
 
 			if (itemStack.hasTag())
 				tagString = itemStack.getTag().toString();
 
-			String registry = itemStack.getItem().getRegistryName().toString();
+			final String registry = itemStack.getItem().getRegistryName().toString();
 
-			int count = itemStack.getCount();
+			final int count = itemStack.getCount();
 
 			if (!registry.equals("minecraft:air"))
 				armorInventory.add(new SQLItem(slot, registry, count, tagString));
@@ -75,35 +73,33 @@ public class EventHandler {
 
 		for (int slot = 0; slot < offHand.size(); slot++) {
 
-			ItemStack itemStack = offHand.get(slot);
+			final ItemStack itemStack = offHand.get(slot);
 
 			String tagString = "";
 
 			if (itemStack.hasTag())
 				tagString = itemStack.getTag().toString();
 
-			String registry = itemStack.getItem().getRegistryName().toString();
+			final String registry = itemStack.getItem().getRegistryName().toString();
 
-			int count = itemStack.getCount();
+			final int count = itemStack.getCount();
 
 			if (!registry.equals("minecraft:air"))
 				offHandInventory.add(new SQLItem(slot, registry, count, tagString));
 		}
 
-		String uuid = player.getGameProfile().getId().toString();
-		uuid = uuid.replace("-", "");
+		String uuid = player.getGameProfile().getId().toString().replace("-", "");
 		SQLHandler.createIfNonExistant(uuid);
 		SQLHandler.uploadInventories(uuid, mainInventory, armorInventory, offHandInventory);
 	}
 
 	@SubscribeEvent
 	public void loginEvent(PlayerEvent.LoadFromFile event) {
-		PlayerEntity player = event.getPlayer();
+		final PlayerEntity player = event.getPlayer();
 
-		String uuid = player.getGameProfile().getId().toString();
-		uuid = uuid.replace("-", "");
+		final String uuid = player.getGameProfile().getId().toString().replace("-", "");
 
-		boolean exists = SQLHandler.createIfNonExistant(uuid);
+		final boolean exists = SQLHandler.createIfNonExistant(uuid);
 
 		if (!exists)
 			return;
@@ -111,7 +107,7 @@ public class EventHandler {
 		HashMap<Integer, ArrayList<SQLItem>> list = SQLHandler.getInventories(uuid);
 
 		for (int j = 0; j < player.inventory.getSizeInventory(); ++j) {
-			ItemStack itemstack = player.inventory.getStackInSlot(j);
+			final ItemStack itemstack = player.inventory.getStackInSlot(j);
 			if (!itemstack.isEmpty()) 
 				player.inventory.setInventorySlotContents(j, ItemStack.EMPTY);
 			

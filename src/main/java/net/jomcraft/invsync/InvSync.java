@@ -11,12 +11,15 @@ import org.apache.logging.log4j.Logger;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
 import net.jomcraft.jclib.JCLib;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.network.FMLNetworkConstants;
 
 @Mod(value = InvSync.MODID)
 public class InvSync {
@@ -29,9 +32,14 @@ public class InvSync {
 	
 	public InvSync() {
 		instance = this;
-		MinecraftForge.EVENT_BUS.register(new EventHandler());
-		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::postInit);
-		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> "OHNOES\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31", (test2, test) -> true));
+		
+		DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () -> {
+			MinecraftForge.EVENT_BUS.register(new EventHandler());
+			FMLJavaModLoadingContext.get().getModEventBus().addListener(this::postInit);
+		});
+		
+		final String any = FMLNetworkConstants.IGNORESERVERONLY;
+		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> any, (test2, test) -> true));
 	}
 	
 	public void postInit(FMLLoadCompleteEvent event) {
@@ -54,9 +62,9 @@ public class InvSync {
 	@SuppressWarnings("unchecked")
 	public static String getModVersion() {
 		//Stupid FG 3 workaround
-		TomlParser parser = new TomlParser();
-		InputStream stream = JCLib.class.getClassLoader().getResourceAsStream("META-INF/mods.toml");
-		CommentedConfig file = parser.parse(stream);
+		final TomlParser parser = new TomlParser();
+		final InputStream stream = JCLib.class.getClassLoader().getResourceAsStream("META-INF/mods.toml");
+		final CommentedConfig file = parser.parse(stream);
 
 		return ((ArrayList<CommentedConfig>) file.get("mods")).get(0).get("version");
 	}

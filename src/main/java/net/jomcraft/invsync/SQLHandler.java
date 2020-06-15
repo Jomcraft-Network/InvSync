@@ -19,10 +19,10 @@ public class SQLHandler {
 		MySQL.update("SELECT VERSION();");
 	}
 	
-	public static boolean createIfNonExistant(String uuid) {
+	public static boolean createIfNonExistant(final String uuid) {
 		
 		try {
-			ResultSet exists = MySQL.con.getMetaData().getTables(null, null, uuid, null);
+			final ResultSet exists = MySQL.con.getMetaData().getTables(null, null, uuid, null);
 
 			if(!exists.next()) {
 				MySQL.update("CREATE TABLE " + uuid + " (ID INT NOT NULL, SLOT INT NOT NULL, REGISTRY VARCHAR(128) NOT NULL, COUNT INT NOT NULL, TAGSTRING TEXT NOT NULL);");
@@ -37,11 +37,11 @@ public class SQLHandler {
 		return false;
 	}
 	
-	public static void uploadInventories(String uuid, ArrayList<SQLItem> mainInventory, ArrayList<SQLItem> armorInventory, ArrayList<SQLItem> offHandInventory) {
+	public static void uploadInventories(final String uuid, final ArrayList<SQLItem> mainInventory, final ArrayList<SQLItem> armorInventory, final ArrayList<SQLItem> offHandInventory) {
 		executor.submit(() -> {
 			synchronized (MySQL.con) {
 				MySQL.update("TRUNCATE TABLE " + uuid + ";");
-				try (PreparedStatement stmt = MySQL.con.prepareStatement("INSERT INTO " + uuid + "(ID, SLOT, REGISTRY, COUNT, TAGSTRING) VALUES (?, ?, ?, ?, ?);")) {
+				try (final PreparedStatement stmt = MySQL.con.prepareStatement("INSERT INTO " + uuid + "(ID, SLOT, REGISTRY, COUNT, TAGSTRING) VALUES (?, ?, ?, ?, ?);")) {
 
 					MySQL.con.setAutoCommit(false);
 
@@ -90,12 +90,12 @@ public class SQLHandler {
 		});
 	}
 	
-	public static HashMap<Integer, ArrayList<SQLItem>> getInventories(String uuid) {
+	public static HashMap<Integer, ArrayList<SQLItem>> getInventories(final String uuid) {
 		HashMap<Integer, ArrayList<SQLItem>> items = new HashMap<Integer, ArrayList<SQLItem>>();
 		ArrayList<SQLItem> main = new ArrayList<SQLItem>();
 		ArrayList<SQLItem> armor = new ArrayList<SQLItem>();
 		ArrayList<SQLItem> off = new ArrayList<SQLItem>();
-		try (ResultSet rs = MySQL.query("SELECT * FROM " + uuid + ";")) {
+		try (final ResultSet rs = MySQL.query("SELECT * FROM " + uuid + ";")) {
 
 			while (rs.next()) {
 				if(rs.getInt("ID") == 0)
