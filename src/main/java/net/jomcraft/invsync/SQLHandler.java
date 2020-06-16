@@ -37,7 +37,11 @@ public class SQLHandler {
 	}
 	
 	public static void uploadInventories(final String uuid, final ArrayList<SQLItem> mainInventory, final ArrayList<SQLItem> armorInventory, final ArrayList<SQLItem> offHandInventory) {
-		MySQL.update("TRUNCATE TABLE " + uuid + ";");
+		try {
+			MySQL.update("TRUNCATE TABLE " + uuid + ";");
+		} catch (ClassNotFoundException | SQLException e1) {
+			InvSync.log.error("Was not able to clean the user table: ", e1);
+		}
 		try (final PreparedStatement stmt = MySQL.con.prepareStatement("INSERT INTO " + uuid + "(ID, SLOT, REGISTRY, COUNT, TAGSTRING) VALUES (?, ?, ?, ?, ?);")) {
 
 			MySQL.con.setAutoCommit(false);

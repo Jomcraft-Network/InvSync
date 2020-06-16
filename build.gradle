@@ -93,7 +93,7 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.15.2-31.2.19'
 
   	compile 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
-  	compile 'net.jomcraft.jclib:JCLib-1.15.2:1.0.3'
+  	compile 'net.jomcraft.jclib:JCLib-1.15.2:1.0.4'
 }
 
 jar {
