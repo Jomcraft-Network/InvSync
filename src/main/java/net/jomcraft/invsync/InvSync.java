@@ -42,7 +42,7 @@ public class InvSync {
 		
 		JCLib.communicateLogin(MODID);
 		
-		if(!JCLib.databaseInitialized)
+		if(!JCLib.databaseInitialized())
 			JCLib.connectMySQL();
 		
 		JCLib.startKeepAlive(10);

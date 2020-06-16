@@ -35,7 +35,7 @@ public class EventHandler {
 		SQLHandler.scheduledExecutor.shutdown();
 		
 		if(SQLHandler.executor.getActiveCount() < 2 && SQLHandler.executor.getQueue().size() == 0) {
-			JCLib.log.info(InvSync.MODID + " is ready to shut down the MySQL-connection");
+			JCLib.getLog().info(InvSync.MODID + " is ready to shut down the MySQL-connection");
 			JCLib.readyForShutdown(InvSync.MODID);
 		}
 		
@@ -119,7 +119,7 @@ public class EventHandler {
 			synchronized (MySQL.con) {
 				SQLHandler.uploadInventories(uuid, mainInventory, armorInventory, offHandInventory);
 				if(EventHandler.shuttingDown && SQLHandler.executor.getActiveCount() < 2 && SQLHandler.executor.getQueue().size() == 0) {
-					JCLib.log.info(InvSync.MODID + " is ready to shut down the MySQL-connection");
+					JCLib.getLog().info(InvSync.MODID + " is ready to shut down the MySQL-connection");
 					JCLib.readyForShutdown(InvSync.MODID);
 				}
 			}
