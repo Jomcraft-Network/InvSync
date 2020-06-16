@@ -2,9 +2,6 @@ package net.jomcraft.invsync;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +23,6 @@ public class InvSync {
 
 	public static final String MODID = "invsync";
 	public static final Logger log = LogManager.getLogger(InvSync.MODID);
-	public static Timer aliveTimer = new Timer();
 	public static final String VERSION = getModVersion();
 	public static InvSync instance;
 	
@@ -43,20 +39,13 @@ public class InvSync {
 	}
 	
 	public void postInit(FMLLoadCompleteEvent event) {
+		
+		JCLib.communicateLogin(MODID);
+		
 		if(!JCLib.databaseInitialized)
 			JCLib.connectMySQL();
 		
-		startKeepAlive();
-	}
-
-	private static void startKeepAlive() {
-		aliveTimer.scheduleAtFixedRate(new KeepAlive(), 10 * 60 * 1000, 10 * 60 * 1000);
-	}
-	
-	public static class KeepAlive extends TimerTask {
-		public void run() {
-			SQLHandler.getVersion();
-		}
+		JCLib.startKeepAlive(10);
 	}
 	
 	@SuppressWarnings("unchecked")
