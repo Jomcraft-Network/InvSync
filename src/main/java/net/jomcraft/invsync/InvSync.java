@@ -39,11 +39,9 @@ public class InvSync {
 	}
 	
 	public void postInit(FMLLoadCompleteEvent event) {
-		
 		JCLib.communicateLogin(MODID);
-		
-		if(!JCLib.databaseInitialized())
-			JCLib.connectMySQL();
+
+		JCLib.connectMySQL();
 		
 		JCLib.startKeepAlive(10);
 	}
