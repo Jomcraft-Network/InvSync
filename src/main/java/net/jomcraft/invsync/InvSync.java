@@ -29,7 +29,7 @@ public class InvSync {
 	public InvSync() {
 		instance = this;
 		
-		DistExecutor.safeRunWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
+		DistExecutor.unsafeRunWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
 			MinecraftForge.EVENT_BUS.register(new EventHandler());
 			FMLJavaModLoadingContext.get().getModEventBus().addListener(this::postInit);
 		});
