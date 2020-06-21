@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -18,7 +19,7 @@ public class SQLHandler {
 	
 	public static ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2);
 	
-	public static boolean createIfNonExistant(final String uuid) {
+	public static boolean createPlayerInventoryTableIfNonExistant(final String uuid) {
 		
 		try {
 			final ResultSet exists = MySQL.con.getMetaData().getTables(null, null, uuid, null);
@@ -29,7 +30,7 @@ public class SQLHandler {
 			}
 			return true;
 		} catch (NullPointerException e) {
-			return createIfNonExistant(uuid);
+			return createPlayerInventoryTableIfNonExistant(uuid);
 		} catch (Exception e) {
 			InvSync.log.error("An error occured while creating a player's custom MySQL table: ", e);
 		}
@@ -116,5 +117,82 @@ public class SQLHandler {
 			InvSync.log.error("An error occured while downloading a player's inventory: ", e);
 		}
 		return items;
+	}
+	
+	public static boolean createCommonPlayersTableIfNonExistant() {
+
+		try (final ResultSet exists = MySQL.con.getMetaData().getTables(null, null, "common_players", null)) {
+
+			if (!exists.next()) {
+				MySQL.update("CREATE TABLE common_players (UUID VARCHAR(40) NOT NULL, NAME VARCHAR(128) NOT NULL, GAMETYPE INT NOT NULL, LATENCY INT NOT NULL);");
+				return false;
+			}
+			return true;
+		} catch (Exception e) {
+			InvSync.log.error("An error occured while creating the common_player MySQL table: ", e);
+		}
+		return false;
+	}
+
+	public static void addPlayerToDatabase(final UUID uuid, final String displayName, final int gametype, final int latency) {
+		createCommonPlayersTableIfNonExistant();
+		try (final PreparedStatement stmt = MySQL.con.prepareStatement("INSERT INTO common_players (UUID, NAME, GAMETYPE, LATENCY) VALUES (?, ?, ?, ?);")) {
+			MySQL.con.setAutoCommit(false);
+
+			stmt.setString(1, uuid.toString());
+			stmt.setString(2, displayName);
+			stmt.setInt(3, gametype);
+			stmt.setInt(4, latency);
+			stmt.addBatch();
+
+			stmt.executeBatch();
+			MySQL.con.commit();
+
+		} catch (SQLException e) {
+			InvSync.log.error("An error occured while adding player to common_player database: ", e);
+		} finally {
+			try {
+				MySQL.con.setAutoCommit(true);
+			} catch (SQLException e) {
+
+			}
+		}
+
+	}
+
+	public static void removePlayerFromDatabase(final UUID uuid) {
+		createCommonPlayersTableIfNonExistant();
+		try (final PreparedStatement stmt = MySQL.con.prepareStatement("DELETE FROM common_players WHERE UUID = ?;")) {
+			MySQL.con.setAutoCommit(false);
+
+			stmt.setString(1, uuid.toString());
+			stmt.addBatch();
+
+			stmt.executeBatch();
+			MySQL.con.commit();
+
+		} catch (SQLException e) {
+			InvSync.log.error("An error occured while removing player from common_player databse: ", e);
+		} finally {
+			try {
+				MySQL.con.setAutoCommit(true);
+			} catch (SQLException e) {
+
+			}
+		}
+	}
+
+	public static ArrayList<String[]> getAllPlayersInDatabase() {
+		createCommonPlayersTableIfNonExistant();
+		try (ResultSet rs = MySQL.query("SELECT * FROM common_players ORDER BY NAME DESC;")) {
+			ArrayList<String[]> playerData = new ArrayList<String[]>();
+			while (rs.next()) {
+				playerData.add(new String[] { rs.getString("UUID"), rs.getString("NAME"), "" + rs.getInt("GAMETYPE"), "" + rs.getInt("LATENCY") });
+			}
+			return playerData;
+		} catch (SQLException | ClassNotFoundException e) {
+			InvSync.log.error("An error occured while getting all common_players: ", e);
+		}
+		return new ArrayList<String[]>();
 	}
 }
