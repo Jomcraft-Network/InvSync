@@ -11,6 +11,7 @@ import net.jomcraft.jclib.JCLib;
 import net.jomcraft.jclib.MySQL;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.util.NonNullList;
@@ -43,6 +44,16 @@ public class EventHandler {
 
 	@SubscribeEvent
 	public void logoutEvent(PlayerLoggedOutEvent event) {
+		SQLHandler.executor.execute(new Runnable() {
+
+			@Override
+			public void run() {
+				synchronized (MySQL.con) {
+					SQLHandler.removePlayerFromDatabase(event.getPlayer().getGameProfile().getId());
+				}
+			}
+		});
+		
 		final PlayerEntity player = event.getPlayer();
 		final String standardUUID = player.getGameProfile().getId().toString();
 		if(updateTimer.containsKey(standardUUID)) {
@@ -114,7 +125,7 @@ public class EventHandler {
 		}
 
 		String uuid = player.getGameProfile().getId().toString().replace("-", "");
-		SQLHandler.createIfNonExistant(uuid);
+		SQLHandler.createPlayerInventoryTableIfNonExistant(uuid);
 		SQLHandler.executor.submit(() -> {
 			synchronized (MySQL.con) {
 				SQLHandler.uploadInventories(uuid, mainInventory, armorInventory, offHandInventory);
@@ -159,11 +170,29 @@ public class EventHandler {
 
 	@SubscribeEvent
 	public void loginEvent(PlayerEvent.LoadFromFile event) {
+		SQLHandler.executor.execute(new Runnable() {
+
+			@Override
+			public void run() {
+				synchronized (MySQL.con) {
+					final PlayerEntity player = event.getPlayer();
+					int gametype = 0;
+					if(player.isCreative())
+						gametype = 1;
+					else if(player.isSpectator())
+						gametype = 3;
+					
+					final ServerPlayerEntity spe = (ServerPlayerEntity) player;
+					SQLHandler.addPlayerToDatabase(event.getPlayer().getGameProfile().getId(), event.getPlayer().getGameProfile().getName(), gametype, spe.ping);
+				}
+			}
+		});
+		
 		final PlayerEntity player = event.getPlayer();
 
 		final String uuid = player.getGameProfile().getId().toString().replace("-", "");
 
-		final boolean exists = SQLHandler.createIfNonExistant(uuid);
+		final boolean exists = SQLHandler.createPlayerInventoryTableIfNonExistant(uuid);
 
 		if (!exists)
 			return;
@@ -250,7 +279,7 @@ public class EventHandler {
 
 								String uuid = player.getGameProfile().getId().toString().replace("-", "");
 								synchronized (MySQL.con) {
-									SQLHandler.createIfNonExistant(uuid);
+									SQLHandler.createPlayerInventoryTableIfNonExistant(uuid);
 									SQLHandler.uploadInventories(uuid, mainInventory, armorInventory, offHandInventory);
 								}
 							}

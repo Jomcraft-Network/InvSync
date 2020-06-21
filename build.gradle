@@ -17,8 +17,8 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'signing'
 
-version = "1.15.2-1.0.4"
-def fileVersion = "1.0.4"
+version = "1.15.2-1.0.6"
+def fileVersion = "1.0.6"
 
 group= "net.jomcraft.invsync"
 
@@ -74,6 +74,8 @@ minecraft {
             }
         }
     }
+    
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 }
 
 processResources {
