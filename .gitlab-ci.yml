@@ -28,6 +28,8 @@ cache:
     - .gradle/wrapper
     - .gradle/caches
 
+dependency_scanning:
+
 build:
   stage: build
   script:
