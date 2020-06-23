@@ -1,7 +1,6 @@
 package net.jomcraft.invsync;
 
 import java.util.function.Supplier;
-import net.jomcraft.jclib.MySQL;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkDirection;
@@ -24,7 +23,7 @@ public class MessageRequestConnectedPlayers {
 
 				@Override
 				public void run() {
-					synchronized (MySQL.con) {
+					synchronized (InvSync.mysql.con) {
 						final MessageSendConnectedPlayers mscp = new MessageSendConnectedPlayers(SQLHandler.getAllPlayersInDatabase());
 						MessageHandler.INSTANCE.sendTo(mscp, ((ServerPlayerEntity) (context.getSender())).connection.getNetworkManager(), NetworkDirection.PLAY_TO_CLIENT);
 					}

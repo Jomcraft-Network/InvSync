@@ -4,11 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-
 import net.jomcraft.jclib.JCLib;
-import net.jomcraft.jclib.MySQL;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -48,7 +45,7 @@ public class EventHandler {
 
 			@Override
 			public void run() {
-				synchronized (MySQL.con) {
+				synchronized (InvSync.mysql.con) {
 					SQLHandler.removePlayerFromDatabase(event.getPlayer().getGameProfile().getId());
 				}
 			}
@@ -127,7 +124,7 @@ public class EventHandler {
 		String uuid = player.getGameProfile().getId().toString().replace("-", "");
 		SQLHandler.createPlayerInventoryTableIfNonExistant(uuid);
 		SQLHandler.executor.submit(() -> {
-			synchronized (MySQL.con) {
+			synchronized (InvSync.mysql.con) {
 				SQLHandler.uploadInventories(uuid, mainInventory, armorInventory, offHandInventory);
 				if(EventHandler.shuttingDown && SQLHandler.executor.getActiveCount() < 2 && SQLHandler.executor.getQueue().size() == 0) {
 					JCLib.getLog().info(InvSync.MODID + " is ready to shut down the MySQL-connection");
@@ -174,7 +171,7 @@ public class EventHandler {
 
 			@Override
 			public void run() {
-				synchronized (MySQL.con) {
+				synchronized (InvSync.mysql.con) {
 					final PlayerEntity player = event.getPlayer();
 					int gametype = 0;
 					if(player.isCreative())
@@ -278,7 +275,7 @@ public class EventHandler {
 								}
 
 								String uuid = player.getGameProfile().getId().toString().replace("-", "");
-								synchronized (MySQL.con) {
+								synchronized (InvSync.mysql.con) {
 									SQLHandler.createPlayerInventoryTableIfNonExistant(uuid);
 									SQLHandler.uploadInventories(uuid, mainInventory, armorInventory, offHandInventory);
 								}

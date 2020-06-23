@@ -17,8 +17,8 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'signing'
 
-version = "1.15.2-1.0.6"
-def fileVersion = "1.0.6"
+version = "1.15.2-1.0.8"
+def fileVersion = "1.0.8"
 
 group= "net.jomcraft.invsync"
 
@@ -95,7 +95,7 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.15.2-31.2.19'
 
   	compile 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
-  	compile "net.jomcraft.jclib:JCLib-1.15.2:1.0.7:deobf"
+  	compile "net.jomcraft.jclib:JCLib-1.15.2:1.1.0:deobf"
 }
 
 jar {
@@ -160,4 +160,35 @@ artifacts {
 	archives deobfJar
 }
 
-jar.finalizedBy('reobfJar') 
+jar.finalizedBy('reobfJar')
+
+curseforge {
+
+  if(project.property("cursegradle.api_token") != null && !project.property("cursegradle.api_token").equals("")) {
+  	apiKey = project.property("cursegradle.api_token")
+  	project {
+    	id = '390591'
+    	releaseType = 'beta'
+    	addGameVersion '1.15.2'
+    	addGameVersion '1.15.1'
+    	addGameVersion '1.15'
+    	relations {
+      		requiredDependency 'jclib'
+    	}
+    	mainArtifact(jar) {
+    		displayName = "$archivesBaseName-$version"
+    	}
+    
+    	addArtifact (sourcesJar) {
+    		releaseType = 'release'
+    		displayName = "$archivesBaseName-$version-sources"
+    	}
+    
+    	addArtifact (deobfJar) {
+    		releaseType = 'release'
+    		displayName = "$archivesBaseName-$version-deobf"
+    	}
+    
+  	}
+  }
+}

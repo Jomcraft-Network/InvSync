@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
 import net.jomcraft.jclib.JCLib;
+import net.jomcraft.jclib.MySQL;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IngameGui;
 import net.minecraftforge.api.distmarker.Dist;
@@ -29,20 +30,23 @@ public class InvSync {
 	public static final String MODID = "invsync";
 	public static final Logger log = LogManager.getLogger(InvSync.MODID);
 	public static final String VERSION = getModVersion();
+	public static volatile MySQL mysql;
 	public static InvSync instance;
 	
 	@OnlyIn(Dist.CLIENT)
 	public static PlayerTabOverlayGui tabOverlayGui;
 	
+	@SuppressWarnings("deprecation")
 	public InvSync() {
 		instance = this;
 		
-		DistExecutor.unsafeRunWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
+		DistExecutor.runWhenOn(Dist.DEDICATED_SERVER, () -> () -> {	
 			MinecraftForge.EVENT_BUS.register(new EventHandler());
-			FMLJavaModLoadingContext.get().getModEventBus().addListener(this::postInit);
+			JCLib.eventBus.register(new EventListener());
 		});
 		
-		DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::postInit);
+		DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
 			FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
 		});
 		
@@ -56,20 +60,20 @@ public class InvSync {
 	private void clientSetup(final FMLClientSetupEvent event) {
 		IngameGui ig = Minecraft.getInstance().ingameGUI;
 		tabOverlayGui = new PlayerTabOverlayGui(Minecraft.getInstance(), ig);
-
 		Minecraft.getInstance().ingameGUI.overlayPlayerList = tabOverlayGui;
 		// TODO: Server Names + gamemode updates
     }
 	
 	public void postInit(FMLLoadCompleteEvent event) {
-		JCLib.communicateLogin(MODID);
-
-		JCLib.connectMySQL();
-		
 		JCLib.startKeepAlive(10);
 	}
 	
+	@SuppressWarnings("deprecation")
 	public void postRegistration(FMLCommonSetupEvent event) {
+		DistExecutor.runWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
+			JCLib.communicateLogin(MODID);
+			JCLib.putConnectionRequest(InvSync.MODID, "InvSync");
+		});
         MessageHandler.init();
     }
 	

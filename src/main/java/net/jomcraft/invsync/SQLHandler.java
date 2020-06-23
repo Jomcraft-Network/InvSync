@@ -9,9 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
-
 import net.jomcraft.invsync.EventHandler.SQLItem;
-import net.jomcraft.jclib.MySQL;
 
 public class SQLHandler {
 	
@@ -22,10 +20,10 @@ public class SQLHandler {
 	public static boolean createPlayerInventoryTableIfNonExistant(final String uuid) {
 		
 		try {
-			final ResultSet exists = MySQL.con.getMetaData().getTables(null, null, uuid, null);
+			final ResultSet exists = InvSync.mysql.con.getMetaData().getTables(null, null, uuid, null);
 
 			if(!exists.next()) {
-				MySQL.update("CREATE TABLE " + uuid + " (ID INT NOT NULL, SLOT INT NOT NULL, REGISTRY VARCHAR(128) NOT NULL, COUNT INT NOT NULL, TAGSTRING TEXT NOT NULL);");
+				InvSync.mysql.update("CREATE TABLE " + uuid + " (ID INT NOT NULL, SLOT INT NOT NULL, REGISTRY VARCHAR(128) NOT NULL, COUNT INT NOT NULL, TAGSTRING TEXT NOT NULL);");
 				return false;
 			}
 			return true;
@@ -39,13 +37,13 @@ public class SQLHandler {
 	
 	public static void uploadInventories(final String uuid, final ArrayList<SQLItem> mainInventory, final ArrayList<SQLItem> armorInventory, final ArrayList<SQLItem> offHandInventory) {
 		try {
-			MySQL.update("TRUNCATE TABLE " + uuid + ";");
+			InvSync.mysql.update("TRUNCATE TABLE " + uuid + ";");
 		} catch (ClassNotFoundException | SQLException e1) {
 			InvSync.log.error("Was not able to clean the user table: ", e1);
 		}
-		try (final PreparedStatement stmt = MySQL.con.prepareStatement("INSERT INTO " + uuid + "(ID, SLOT, REGISTRY, COUNT, TAGSTRING) VALUES (?, ?, ?, ?, ?);")) {
+		try (final PreparedStatement stmt = InvSync.mysql.con.prepareStatement("INSERT INTO " + uuid + "(ID, SLOT, REGISTRY, COUNT, TAGSTRING) VALUES (?, ?, ?, ?, ?);")) {
 
-			MySQL.con.setAutoCommit(false);
+			InvSync.mysql.con.setAutoCommit(false);
 
 			for (SQLItem item : mainInventory) {
 				stmt.setInt(1, 0);
@@ -75,7 +73,7 @@ public class SQLHandler {
 			}
 
 			stmt.executeBatch();
-			MySQL.con.commit();
+			InvSync.mysql.con.commit();
 
 		} catch (NullPointerException e) {
 			uploadInventories(uuid, offHandInventory, offHandInventory, offHandInventory);
@@ -83,7 +81,7 @@ public class SQLHandler {
 			InvSync.log.error("An error occured while saving a player's inventory: ", e);
 		} finally {
 			try {
-				MySQL.con.setAutoCommit(true);
+				InvSync.mysql.con.setAutoCommit(true);
 			} catch (SQLException e) {
 				InvSync.log.error("An error occured while saving a player's inventory: ", e);
 			}
@@ -95,7 +93,7 @@ public class SQLHandler {
 		ArrayList<SQLItem> main = new ArrayList<SQLItem>();
 		ArrayList<SQLItem> armor = new ArrayList<SQLItem>();
 		ArrayList<SQLItem> off = new ArrayList<SQLItem>();
-		try (final ResultSet rs = MySQL.query("SELECT * FROM " + uuid + ";")) {
+		try (final ResultSet rs = InvSync.mysql.query("SELECT * FROM " + uuid + ";")) {
 
 			while (rs.next()) {
 				if(rs.getInt("ID") == 0)
@@ -121,10 +119,10 @@ public class SQLHandler {
 	
 	public static boolean createCommonPlayersTableIfNonExistant() {
 
-		try (final ResultSet exists = MySQL.con.getMetaData().getTables(null, null, "common_players", null)) {
+		try (final ResultSet exists = InvSync.mysql.con.getMetaData().getTables(null, null, "common_players", null)) {
 
 			if (!exists.next()) {
-				MySQL.update("CREATE TABLE common_players (UUID VARCHAR(40) NOT NULL, NAME VARCHAR(128) NOT NULL, GAMETYPE INT NOT NULL, LATENCY INT NOT NULL);");
+				InvSync.mysql.update("CREATE TABLE common_players (UUID VARCHAR(40) NOT NULL, NAME VARCHAR(128) NOT NULL, GAMETYPE INT NOT NULL, LATENCY INT NOT NULL);");
 				return false;
 			}
 			return true;
@@ -136,8 +134,8 @@ public class SQLHandler {
 
 	public static void addPlayerToDatabase(final UUID uuid, final String displayName, final int gametype, final int latency) {
 		createCommonPlayersTableIfNonExistant();
-		try (final PreparedStatement stmt = MySQL.con.prepareStatement("INSERT INTO common_players (UUID, NAME, GAMETYPE, LATENCY) VALUES (?, ?, ?, ?);")) {
-			MySQL.con.setAutoCommit(false);
+		try (final PreparedStatement stmt = InvSync.mysql.con.prepareStatement("INSERT INTO common_players (UUID, NAME, GAMETYPE, LATENCY) VALUES (?, ?, ?, ?);")) {
+			InvSync.mysql.con.setAutoCommit(false);
 
 			stmt.setString(1, uuid.toString());
 			stmt.setString(2, displayName);
@@ -146,13 +144,13 @@ public class SQLHandler {
 			stmt.addBatch();
 
 			stmt.executeBatch();
-			MySQL.con.commit();
+			InvSync.mysql.con.commit();
 
 		} catch (SQLException e) {
 			InvSync.log.error("An error occured while adding player to common_player database: ", e);
 		} finally {
 			try {
-				MySQL.con.setAutoCommit(true);
+				InvSync.mysql.con.setAutoCommit(true);
 			} catch (SQLException e) {
 
 			}
@@ -162,20 +160,20 @@ public class SQLHandler {
 
 	public static void removePlayerFromDatabase(final UUID uuid) {
 		createCommonPlayersTableIfNonExistant();
-		try (final PreparedStatement stmt = MySQL.con.prepareStatement("DELETE FROM common_players WHERE UUID = ?;")) {
-			MySQL.con.setAutoCommit(false);
+		try (final PreparedStatement stmt = InvSync.mysql.con.prepareStatement("DELETE FROM common_players WHERE UUID = ?;")) {
+			InvSync.mysql.con.setAutoCommit(false);
 
 			stmt.setString(1, uuid.toString());
 			stmt.addBatch();
 
 			stmt.executeBatch();
-			MySQL.con.commit();
+			InvSync.mysql.con.commit();
 
 		} catch (SQLException e) {
 			InvSync.log.error("An error occured while removing player from common_player databse: ", e);
 		} finally {
 			try {
-				MySQL.con.setAutoCommit(true);
+				InvSync.mysql.con.setAutoCommit(true);
 			} catch (SQLException e) {
 
 			}
@@ -184,7 +182,7 @@ public class SQLHandler {
 
 	public static ArrayList<String[]> getAllPlayersInDatabase() {
 		createCommonPlayersTableIfNonExistant();
-		try (ResultSet rs = MySQL.query("SELECT * FROM common_players ORDER BY NAME DESC;")) {
+		try (ResultSet rs = InvSync.mysql.query("SELECT * FROM common_players ORDER BY NAME DESC;")) {
 			ArrayList<String[]> playerData = new ArrayList<String[]>();
 			while (rs.next()) {
 				playerData.add(new String[] { rs.getString("UUID"), rs.getString("NAME"), "" + rs.getInt("GAMETYPE"), "" + rs.getInt("LATENCY") });
