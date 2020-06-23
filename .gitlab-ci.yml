@@ -5,6 +5,7 @@ include:
 
 stages:
   - build
+  - dependency_scanning
   - deploy
   
 before_script:
