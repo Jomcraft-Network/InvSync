@@ -7,6 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
+
+import net.jomcraft.jclib.ConnectionRequest;
 import net.jomcraft.jclib.JCLib;
 import net.jomcraft.jclib.MySQL;
 import net.minecraft.client.Minecraft;
@@ -72,7 +74,7 @@ public class InvSync {
 	public void postRegistration(FMLCommonSetupEvent event) {
 		DistExecutor.runWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
 			JCLib.communicateLogin(MODID);
-			JCLib.putConnectionRequest(InvSync.MODID, "InvSync");
+			JCLib.putConnectionRequest(InvSync.MODID, new ConnectionRequest("InvSync", new InvSyncConnectionRequest()));
 		});
         MessageHandler.init();
     }
