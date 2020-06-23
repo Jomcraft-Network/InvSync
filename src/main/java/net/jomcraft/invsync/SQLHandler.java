@@ -6,9 +6,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import net.jomcraft.invsync.EventHandler.SQLItem;
 
 public class SQLHandler {
@@ -28,7 +33,19 @@ public class SQLHandler {
 			}
 			return true;
 		} catch (NullPointerException e) {
-			return createPlayerInventoryTableIfNonExistant(uuid);
+			Callable<Boolean> task = new Callable<Boolean>() {
+				public Boolean call() {
+					return createPlayerInventoryTableIfNonExistant(uuid);
+				}
+			};
+			
+			Future<Boolean> result = scheduledExecutor.schedule(task, 5, TimeUnit.SECONDS);
+			
+			try {
+				return result.get();
+			} catch (InterruptedException | ExecutionException e1) {
+				InvSync.log.error("An error occured while creating a player's custom MySQL table: ", e1);
+			}
 		} catch (Exception e) {
 			InvSync.log.error("An error occured while creating a player's custom MySQL table: ", e);
 		}
@@ -76,7 +93,13 @@ public class SQLHandler {
 			InvSync.mysql.con.commit();
 
 		} catch (NullPointerException e) {
-			uploadInventories(uuid, offHandInventory, offHandInventory, offHandInventory);
+			Runnable task = new Runnable() {
+				public void run() {
+					uploadInventories(uuid, offHandInventory, offHandInventory, offHandInventory);
+				}
+			};
+			
+			scheduledExecutor.schedule(task, 5, TimeUnit.SECONDS);
 		} catch (Exception e) {
 			InvSync.log.error("An error occured while saving a player's inventory: ", e);
 		} finally {
@@ -110,7 +133,20 @@ public class SQLHandler {
 
 			return items;
 		} catch (NullPointerException e) {
-			return getInventories(uuid);
+			Callable<HashMap<Integer, ArrayList<SQLItem>>> task = new Callable<HashMap<Integer, ArrayList<SQLItem>>>() {
+				public HashMap<Integer, ArrayList<SQLItem>> call() {
+					return getInventories(uuid);
+				}
+			};
+			
+			Future<HashMap<Integer, ArrayList<SQLItem>>> result = scheduledExecutor.schedule(task, 5, TimeUnit.SECONDS);
+			
+			try {
+				return result.get();
+			} catch (InterruptedException | ExecutionException e1) {
+				InvSync.log.error("An error occured while downloading a player's inventory: ", e1);
+			}
+			
 		} catch (Exception e) {
 			InvSync.log.error("An error occured while downloading a player's inventory: ", e);
 		}
