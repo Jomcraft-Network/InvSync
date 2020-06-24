@@ -150,7 +150,7 @@ public class SQLHandler {
 		} catch (Exception e) {
 			InvSync.log.error("An error occured while downloading a player's inventory: ", e);
 		}
-		return items;
+		return null;
 	}
 	
 	public static boolean createCommonPlayersTableIfNonExistant() {

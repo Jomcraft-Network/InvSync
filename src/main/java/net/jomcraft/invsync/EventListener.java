@@ -9,7 +9,7 @@ public class EventListener {
 	@Subscribe
     public void dbSetupEvent(DBConnectEvent event) {
        if(event.getDBName().equals("InvSync") && event.getResult() == Result.ALLOW) {
-    	   //InvSync.mysql = JCLib.getDatabases().get(InvSync.MODID);
+    	   InvSync.log.info("InvSync database connection successfully established");
        }
     }
 	

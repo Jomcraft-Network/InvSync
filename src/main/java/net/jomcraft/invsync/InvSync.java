@@ -2,12 +2,10 @@ package net.jomcraft.invsync;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
-
 import net.jomcraft.jclib.ConnectionRequest;
 import net.jomcraft.jclib.JCLib;
 import net.jomcraft.jclib.MySQL;
@@ -17,14 +15,11 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ExtensionPoint;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.network.FMLNetworkConstants;
 
 @Mod(value = InvSync.MODID)
 public class InvSync {
@@ -53,8 +48,6 @@ public class InvSync {
 		});
 		
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::postRegistration);
-		final String any = FMLNetworkConstants.IGNORESERVERONLY;
-		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> any, (test2, test) -> true));
 	}
 	
 	@SuppressWarnings("resource")

@@ -195,6 +195,9 @@ public class EventHandler {
 			return;
 
 		HashMap<Integer, ArrayList<SQLItem>> list = SQLHandler.getInventories(uuid);
+		
+		if(list == null)
+			return;
 
 		for (int j = 0; j < player.inventory.getSizeInventory(); ++j) {
 			final ItemStack itemstack = player.inventory.getStackInSlot(j);
